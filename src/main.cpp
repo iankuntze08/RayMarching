@@ -11,9 +11,7 @@
 
 #include "..\shaders\Shader.h"
 #include "UniformHandler.h"
-#include "Constants.h"
-#include "Mesh.h"
-#include "Vertex.h"
+#include "Camera3.h"
 #include "Quad.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -35,6 +33,8 @@ float lastY = SCR_HEIGHT / 2;
 
 float dt = 0.01;
 float dt2 = dt * dt;
+
+Camera3D camera = Camera3D(glm::vec3(0.0f, 4.0f, 2.0f), 0.005f);
 
 class FPSHandler
 {
@@ -101,6 +101,39 @@ GLFWwindow* initWindow(const char* windowTitle)
     return window;
 }
 
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+    if (firstMouse)
+    {
+        lastX = xpos;
+        lastY = ypos;
+        firstMouse = false;
+    }
+
+    float xoffset = xpos - lastX;
+    float yoffset = lastY - ypos;
+    lastX = xpos;
+    lastY = ypos;
+
+    float sensitivity = 0.1f;
+    xoffset *= sensitivity;
+    yoffset *= sensitivity;
+
+    yaw += xoffset;
+    pitch += yoffset;
+
+    if(pitch > 89.0f)
+        pitch = 89.0f;
+    if(pitch < -89.0f)
+        pitch = -89.0f;
+
+    glm::vec3 direction;
+    direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    direction.y = sin(glm::radians(pitch));
+    direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    camera.setCameraFront(glm::normalize(direction));
+}
+
 int main(int argc, char* argv[])
 {
     const char* windowTitle = "OpenGL";
@@ -111,10 +144,15 @@ int main(int argc, char* argv[])
     uniformer.addWindowSize(window, "windowSize");
     float time = 0.0;
     GLint timeLoc = glGetUniformLocation(mainShader.ID, "time");
+    GLint cameraPosLoc = glGetUniformLocation(mainShader.ID, "camPos");
+    GLint cameraLookLoc = glGetUniformLocation(mainShader.ID, "camLook");
 
     glm::vec2 windowSize = glm::vec2(SCR_WIDTH, SCR_HEIGHT);
 
     FPSHandler fpsCounter = FPSHandler();
+
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetCursorPosCallback(window, mouse_callback);
 
     Quad quad = Quad(glm::vec3(1.0, 0.0, 0.0));
 
@@ -130,9 +168,13 @@ int main(int argc, char* argv[])
 
         quad.draw(mainShader);
 
+        camera.doCameraMovement(window);
+
         uniformer.updateUniforms();
         uniformer.updateWindowSize(window);
         glUniform1f(timeLoc, time);
+        glUniform4f(cameraPosLoc, camera.cameraPos.x, camera.cameraPos.y, camera.cameraPos.z, 0.0);
+        glUniform4f(cameraLookLoc, camera.cameraFront.x, camera.cameraFront.y, camera.cameraFront.z, 0.0);
 
         glfwSwapBuffers(window);
         glfwPollEvents();

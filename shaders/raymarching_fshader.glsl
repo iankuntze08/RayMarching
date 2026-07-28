@@ -6,9 +6,10 @@ layout(origin_upper_left, pixel_center_integer) in vec4 gl_FragCoord;
 
 uniform vec2 windowSize;
 uniform float time;
+uniform vec4 camPos;
+uniform vec4 camLook;
 
 out vec4 fragColor;
-
 
 
 struct Sphere
@@ -34,15 +35,14 @@ const vec3 skyColor = vec3(0.6, 0.61, 0.9);
 const vec3 surfaceColor = vec3(0.4, 0.4, 0.4);
 const vec3 lightSource = normalize(vec3(2, 1, 0.0));
 
-const vec3 lookAtPos = vec3(0.0, 0.5, 0.0);
-vec3 cameraPos = vec3(3.0 * cos(time / 200.0), 2.0, 3.0 * sin(time / 200.0));
+vec3 cameraPos = vec3(camPos.x, camPos.y, camPos.z);
 
-vec3 cameraForward = normalize(lookAtPos - cameraPos);
+vec3 cameraForward = vec3(camLook.x, camLook.y, camLook.z);
 vec3 cameraRight = normalize(cross(cameraForward, vec3(0.0, 1.0, 0.0)));
 vec3 cameraUp = cross(cameraRight, cameraForward);
 
 const int rayMaxSteps = 100;
-const float minDistTolerance = 0.007;
+const float minDistTolerance = 0.001;
 const float maxDistTolerance = 250.0;
 
 float smax(float x, float y, float blend)
@@ -100,7 +100,7 @@ float softShadows(Scene s, vec3 pos, vec3 rayDir)
     {
         float h = sdf(s, pos + rayDir * t);
 
-        if (h < 0.001)
+        if (h < 0.0001)
             return 0.0;
 
         res = min(res, 8.0 * h / t);
@@ -121,7 +121,7 @@ float randomDetailUV(vec2 p)
 
 vec2 getUV()
 {
-    vec2 randomOffset = vec2(hash(gl_FragCoord.xy), hash(gl_FragCoord.xy + 1.0)) - 0.5;
+    vec2 randomOffset = vec2(randomDetailUV(gl_FragCoord.xy), randomDetailUV(gl_FragCoord.xy + 1.0)) - 0.5;
 
     vec2 uv = (((gl_FragCoord.xy + randomOffset) / windowSize) * 2.0) - 1.0;
     uv.x *= windowSize.x / windowSize.y;
