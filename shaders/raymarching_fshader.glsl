@@ -114,9 +114,16 @@ float softShadows(Scene s, vec3 pos, vec3 rayDir)
     return clamp(res, 0.0, 1.0);
 }
 
+float randomDetailUV(vec2 p)
+{
+    return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
 vec2 getUV()
 {
-    vec2 uv = ((gl_FragCoord.xy / windowSize) * 2.0) - 1.0;
+    vec2 randomOffset = vec2(hash(gl_FragCoord.xy), hash(gl_FragCoord.xy + 1.0)) - 0.5;
+
+    vec2 uv = (((gl_FragCoord.xy + randomOffset) / windowSize) * 2.0) - 1.0;
     uv.x *= windowSize.x / windowSize.y;
     uv.y *= -1.0;
 
@@ -125,6 +132,7 @@ vec2 getUV()
 
 void main()
 {
+
     vec3 color = vec3(skyColor);
 
     Sphere s1 = Sphere(vec3(0.0, 0.5, 0.0), vec3(0.9, 0.1, 0.1), 1.0);
