@@ -138,7 +138,8 @@ int main(int argc, char* argv[])
 {
     const char* windowTitle = "OpenGL";
     GLFWwindow* window = initWindow(windowTitle);
-    Shader mainShader("shaders/vshader.glsl", "shaders/raymarching_fshader.glsl");
+    // Shader mainShader("shaders/vshader.glsl", "shaders/raymarching_fshader.glsl");
+    Shader mainShader("shaders/vshader.glsl", "shaders/black_hole_fshader.glsl");
     UniformHandler uniformer(mainShader);
 
     uniformer.addWindowSize(window, "windowSize");
