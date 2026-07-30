@@ -163,7 +163,7 @@ float accretionDensity(vec3 pos, float innerR, float outerR)
     float radius = length(pos.xz);
     float radial = smoothstep(innerR, innerR + 0.3, radius) * (1.0 - smoothstep(outerR - 0.5, outerR, radius));
     float height = abs(pos.y);
-    float thickness = 0.15;
+    float thickness = 0.03;
     float vertical = exp(-(height * height) / (thickness * thickness));
 
     return radial * vertical;
@@ -181,7 +181,7 @@ RayMarchResult fixedRayMarch(vec3 rayDir, Scene s)
 
     float eventHorizon = 0.5;
 
-    float discInnerRadius = 0.8;
+    float discInnerRadius = 0.9;
     float discOuterRadius = 4.0;
 
     float density = 0.0;
@@ -208,7 +208,7 @@ RayMarchResult fixedRayMarch(vec3 rayDir, Scene s)
         {
             float stepSize = length(r.newVelDir);
             float alpha = 1.0 - exp(-density * stepSize * 5.0);
-            vec4 col = vec4(vec3(1.0,0.5,0.1) * alpha, alpha);
+            vec4 col = vec4(vec3(1.0,0.4,0.1) * alpha, alpha);
             res += col * (1.0 - res.w);
         }
 
