@@ -155,19 +155,7 @@ struct RayMarchResult
     vec3 pos;
     vec3 dir;
     vec3 oDir;
-    vec4 color;
 };
-
-float accretionDensity(vec3 pos, float innerR, float outerR)
-{
-    float radius = length(pos.xz);
-    float radial = smoothstep(innerR, innerR + 0.3, radius) * (1.0 - smoothstep(outerR - 0.5, outerR, radius));
-    float height = abs(pos.y);
-    float thickness = 0.15;
-    float vertical = exp(-(height * height) / (thickness * thickness));
-
-    return radial * vertical;
-}
 
 RayMarchResult fixedRayMarch(vec3 rayDir, Scene s)
 {
@@ -179,13 +167,8 @@ RayMarchResult fixedRayMarch(vec3 rayDir, Scene s)
     float distortionValue = 1.75;
     float schwarzchildRadius = 0.1;
 
-    float eventHorizon = 0.5;
-
     float discInnerRadius = 0.8;
     float discOuterRadius = 4.0;
-
-    float density = 0.0;
-    vec4 res = vec4(0.0);
 
     for (int i = 0; i < rayMaxSteps; i++)
     {
@@ -195,33 +178,18 @@ RayMarchResult fixedRayMarch(vec3 rayDir, Scene s)
         r.newVelDir = normalize(mix(unaffectedDir, dirToCenter, lerp)) * r.dt;
         r.newPos = r.prevPos + r.newVelDir;
         if (length(r.newPos) < 0.015)
-            return RayMarchResult(-2.0, r.newPos, r.newVelDir, rayDir, res);
-        float distFromSphere = -sdAccretionDisc(r.newPos, discInnerRadius, discOuterRadius);
+            return RayMarchResult(-2.0, r.newPos, r.newVelDir, rayDir);
+        float distFromSphere = sdAccretionDisc(r.newPos, discInnerRadius, discOuterRadius);
         r.prevPos = r.newPos;
         r.prevVelDir = r.newVelDir;
 
-
-
-        float density = accretionDensity(r.newPos, discInnerRadius, discOuterRadius);
-
-        if (density > 0.001)
-        {
-            float stepSize = length(r.newVelDir);
-            float alpha = 1.0 - exp(-density * stepSize * 5.0);
-            vec4 col = vec4(vec3(1.0,0.5,0.1) * alpha, alpha);
-            res += col * (1.0 - res.w);
-        }
-
-
-
-
-        distanceFromOrigin -= distFromSphere;
-        if (length(r.newPos) < eventHorizon)
-            return RayMarchResult(-1.0, r.newPos, r.newVelDir, rayDir, res);
+        if (distFromSphere < minDistTolerance)
+            return RayMarchResult(distanceFromOrigin, r.newPos, r.newVelDir, rayDir);
+        distanceFromOrigin += distFromSphere;
         if (distanceFromOrigin > maxDistTolerance)
             break;
     }
-    return RayMarchResult(-distanceFromOrigin, r.newPos, r.newVelDir, rayDir, res);
+    return RayMarchResult(-1.0, r.newPos, r.newVelDir, rayDir);
 }
 
 vec3 getNormal(vec3 pos, Scene s)
@@ -307,35 +275,30 @@ void main()
     rmr.dir = normalize(rmr.dir.x * cameraRight + rmr.dir.y * cameraUp + rmr.dir.z * cameraForward);
     float mag = length(rmr.pos);
 
-
-
-    // if (march >= 0.0)
-    // {
-    //     // disc hit
-    //     color = s1.color;
-    // }
-    // if (int(march) == -2)
-    // {
-    //     // the 'hole
-    //     color = vec3(0.0, 0.0, 0.0);
-    // }
-
-
-    color = rmr.color.xyz;
-
-    if (int(rmr.distFromCamera) != -1.0)
+    if (march >= 0.0)
+    {
+        // disc hit
+        color = s1.color * temperature(mag);
+    }
+    if (int(march) == -2)
+    {
+        // the 'hole
+        color = vec3(0.0, 0.0, 0.0);
+    }
+    if (int(march) == -1)
     {
         // stars
         float lon = atan(rmr.dir.z, rmr.dir.x);
         float lat = asin(clamp(rmr.oDir.y, -1.0, 1.0));
 
-        vec2 uv2 = vec2( // dont ask
+        vec2 uv = vec2( // dont ask
             lon / (2.0 * 3.1415) + 0.5,
             lat / 3.1415 + 0.5
         );
-        uv2 *= 250.0;
+        uv *= 250.0;
 
-        color += vec3(stars(uv2));
+        color = vec3(stars(uv));
+        // color += (mix(pow(temperature(mag), 2) * s1.color, color, 0.5));
     }
     fragColor = vec4(color, 1.0);
 }

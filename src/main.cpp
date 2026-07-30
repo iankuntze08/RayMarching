@@ -35,7 +35,7 @@ float lastY = SCR_HEIGHT / 2;
 float dt = 0.01;
 float dt2 = dt * dt;
 
-Camera3D camera = Camera3D(glm::vec3(0.0f, 4.0f, 2.0f), 0.005f);
+Camera3D camera = Camera3D(glm::vec3(0.0f, 1.0f, 6.0f), 0.005f);
 
 class FPSHandler
 {
