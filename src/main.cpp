@@ -21,8 +21,8 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 }
 void processInput(GLFWwindow* window);
 
-const unsigned int SCR_WIDTH = 600;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 300;
+const unsigned int SCR_HEIGHT = 300;
 
 const int numCubeVertices = 108;
 
@@ -35,7 +35,8 @@ float lastY = SCR_HEIGHT / 2;
 float dt = 0.01;
 float dt2 = dt * dt;
 
-Camera3D camera = Camera3D(glm::vec3(0.0f, 1.0f, 6.0f), 0.005f);
+Camera3D camera = Camera3D(glm::vec3(0.0f, 1.0f, 6.0f), 0.01f); // good pos for disk
+// Camera3D camera = Camera3D(glm::vec3(0.0f, 0.0f, 3.4f), 0.005f); // good pos for just the object
 
 class FPSHandler
 {
@@ -123,10 +124,10 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
     yaw += xoffset;
     pitch += yoffset;
 
-    if(pitch > 89.0f)
-        pitch = 89.0f;
-    if(pitch < -89.0f)
-        pitch = -89.0f;
+    if(pitch > 89.9f)
+        pitch = 89.9f;
+    if(pitch < -89.9f)
+        pitch = -89.9f;
 
     glm::vec3 direction;
     direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
@@ -139,6 +140,7 @@ int main(int argc, char* argv[])
 {
     const char* windowTitle = "OpenGL";
     GLFWwindow* window = initWindow(windowTitle);
+    glfwSwapInterval(1); // ------------------ WARNING TURN OFF IF WANT HIGH FRAMERATES ------------------
     // Shader mainShader("shaders/vshader.glsl", "shaders/raymarching_fshader.glsl");
     Shader mainShader("shaders/vshader.glsl", "shaders/black_hole_fshader.glsl");
     UniformHandler uniformer(mainShader);
@@ -180,6 +182,8 @@ int main(int argc, char* argv[])
 
         glfwSwapBuffers(window);
         glfwPollEvents();
+
+        // std::cout << "CAMERA POS : " << camera.cameraPos.x << " - " << camera.cameraPos.y << " - " << camera.cameraPos.z << "\n";
 
         fpsCounter.endTime = glfwGetTime();
     }
